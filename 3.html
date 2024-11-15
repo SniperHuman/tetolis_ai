@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tetris Game</title>
+    <style>
+        body { font-family: Arial, sans-serif; display: flex; flex-direction: column; align-items: center; }
+        h1 { margin: 20px; }
+        #game-container { display: flex; align-items: flex-start; }
+        #game-board { width: 200px; height: 400px; background: #333; display: grid; grid-template-columns: repeat(10, 1fr); border: 2px solid #555; }
+        .cell { width: 100%; height: 100%; }
+        .filled { background: #0ff; }
+        #info { margin-left: 20px; text-align: left; }
+        #score, #hold, #next { margin-bottom: 20px; }
+        .hold-block, .next-block { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2px; }
+    </style>
+</head>
+<body>
+    <h1>Tetris Game</h1>
+    <div id="game-container">
+        <div id="game-board"></div>
+        <div id="info">
+            <div id="score">Score: 0</div>
+            <div id="hold">Hold: <div class="hold-block"></div></div>
+            <div id="next">Next: <div class="next-block"></div></div>
+        </div>
+    </div>
+    <script>
+        const TETROMINOS = {
+            I: [[1, 1, 1, 1]],
+            O: [[1, 1], [1, 1]],
+            T: [[0, 1, 0], [1, 1, 1]],
+            S: [[0, 1, 1], [1, 1, 0]],
+            Z: [[1, 1, 0], [0, 1, 1]],
+            J: [[1, 0, 0], [1, 1, 1]],
+            L: [[0, 0, 1], [1, 1, 1]]
+        };
+
+        let board = Array.from({ length: 20 }, () => Array(10).fill(0));
+        let current, next, hold = null, canHold = true;
+        let score = 0;
+
+        const gameBoard = document.getElementById("game-board");
+        const scoreDisplay = document.getElementById("score");
+
+        function drawBoard() {
+            gameBoard.innerHTML = '';
+            board.forEach(row => row.forEach(cell => {
+                const div = document.createElement("div");
+                div.className = cell ? "cell filled" : "cell";
+                gameBoard.appendChild(div);
+            }));
+            if (current) {
+                current.shape.forEach((row, y) => {
+                    row.forEach((cell, x) => {
+                        if (cell && current.y + y < 20) {
+                            const index = (current.y + y) * 10 + (current.x + x);
+                            gameBoard.children[index].classList.add("filled");
+                        }
+                    });
+                });
+            }
+        }
+
+        function updateScore(linesCleared) {
+            score += linesCleared * 100;
+            scoreDisplay.textContent = `Score: ${score}`;
+        }
+
+        function collision(newX = 0, newY = 0) {
+            return current.shape.some((row, y) =>
+                row.some((cell, x) => 
+                    cell &&
+                    (current.y + y + newY >= 20 ||
+                    current.x + x + newX < 0 ||
+                    current.x + x + newX >= 10 ||
+                    board[current.y + y + newY][current.x + x + newX])
+                )
+            );
+        }
+
+        function freezePiece() {
+            current.shape.forEach((row, y) => {
+                row.forEach((cell, x) => {
+                    if (cell) board[current.y + y][current.x + x] = 1;
+                });
+            });
+            clearLines();
+            current = next;
+            next = generatePiece();
+            canHold = true;
+            if (collision()) {
+                alert("Game Over");
+                board = Array.from({ length: 20 }, () => Array(10).fill(0));
+                score = 0;
+                updateScore(0);
+            }
+        }
+
+        function clearLines() {
+            let linesCleared = 0;
+            board = board.filter(row => {
+                if (row.every(cell => cell)) {
+                    linesCleared++;
+                    return false;
+                }
+                return true;
+            });
+            while (board.length < 20) {
+                board.unshift(Array(10).fill(0));
+            }
+            updateScore(linesCleared);
+        }
+
+        function movePiece(dir) {
+            if (!collision(dir)) {
+                current.x += dir;
+                drawBoard();
+            }
+        }
+
+        function movePieceDown() {
+            if (collision(0, 1)) {
+                freezePiece();
+            } else {
+                current.y += 1;
+                drawBoard();
+            }
+        }
+
+        function hardDrop() {
+            while (!collision(0, 1)) current.y += 1;
+            freezePiece();
+            drawBoard();
+        }
+
+        document.addEventListener("keydown", e => {
+            switch (e.key) {
+                case "ArrowLeft": movePiece(-1); break;
+                case "ArrowRight": movePiece(1); break;
+                case "ArrowDown": movePieceDown(); break;
+                case "ArrowUp": hardDrop(); break;
+                case "a": rotatePiece(-1); break;
+                case "d": rotatePiece(1); break;
+                case " ": holdPiece(); break;
+            }
+        });
+
+        function generatePiece() {
+            const tetrominoes = "IOTSZJL";
+            const random = tetrominoes[Math.floor(Math.random() * tetrominoes.length)];
+            return { shape: TETROMINOS[random], x: 3, y: 0 };
+        }
+
+        function startGame() {
+            current = generatePiece();
+            next = generatePiece();
+            drawBoard();
+            gameLoop();
+        }
+
+        function gameLoop() {
+            setTimeout(() => {
+                movePieceDown();
+                gameLoop();
+            }, 500);
+        }
+
+        startGame();
+    </script>
+</body>
+</html>

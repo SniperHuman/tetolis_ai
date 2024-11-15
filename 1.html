@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tetris Game</title>
+    <style>
+        /* Basic styles for Tetris board and information */
+        body { font-family: Arial, sans-serif; display: flex; flex-direction: column; align-items: center; }
+        h1 { margin: 20px; }
+        #game-container { display: flex; align-items: flex-start; }
+        #game-board { width: 200px; height: 400px; background: #333; display: grid; grid-template-columns: repeat(10, 1fr); border: 2px solid #555; }
+        .cell { width: 100%; height: 100%; }
+        .filled { background: #0ff; }
+        #info { margin-left: 20px; text-align: left; }
+        #score, #hold, #next { margin-bottom: 20px; }
+        .hold-block, .next-block { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2px; }
+    </style>
+</head>
+<body>
+    <h1>Tetris Game</h1>
+    <div id="game-container">
+        <div id="game-board"></div>
+        <div id="info">
+            <div id="score">Score: 0</div>
+            <div id="hold">Hold: <div class="hold-block"></div></div>
+            <div id="next">Next: <div class="next-block"></div></div>
+        </div>
+    </div>
+    <script>
+        // Tetrimino shapes and rotation definitions
+        const TETROMINOS = {
+            I: [[1, 1, 1, 1]],
+            O: [[1, 1], [1, 1]],
+            T: [[0, 1, 0], [1, 1, 1]],
+            S: [[0, 1, 1], [1, 1, 0]],
+            Z: [[1, 1, 0], [0, 1, 1]],
+            J: [[1, 0, 0], [1, 1, 1]],
+            L: [[0, 0, 1], [1, 1, 1]]
+        };
+
+        let board = Array.from({ length: 20 }, () => Array(10).fill(0));
+        let current, next, hold = null, canHold = true;
+        let score = 0;
+
+        const gameBoard = document.getElementById("game-board");
+        const scoreDisplay = document.getElementById("score");
+        const holdDisplay = document.querySelector(".hold-block");
+        const nextDisplay = document.querySelector(".next-block");
+
+        // Generate the game grid
+        function drawBoard() {
+            gameBoard.innerHTML = '';
+            board.forEach(row => row.forEach(cell => {
+                const div = document.createElement("div");
+                div.className = cell ? "cell filled" : "cell";
+                gameBoard.appendChild(div);
+            }));
+        }
+
+        // Update the score display
+        function updateScore(linesCleared) {
+            score += linesCleared * 100;
+            scoreDisplay.textContent = `Score: ${score}`;
+        }
+
+        // Handle key presses for controls
+        document.addEventListener("keydown", e => {
+            switch (e.key) {
+                case "ArrowLeft": /* move left */ break;
+                case "ArrowRight": /* move right */ break;
+                case "ArrowDown": /* soft drop */ break;
+                case "ArrowUp": /* hard drop */ break;
+                case "a": /* rotate left */ break;
+                case "d": /* rotate right */ break;
+                case " ": /* hold piece */ break;
+            }
+        });
+
+        // Initialize the game board and start loop
+        function startGame() {
+            current = generatePiece();
+            next = generatePiece();
+            drawBoard();
+            gameLoop();
+        }
+
+        // Generate a random Tetrimino
+        function generatePiece() {
+            const tetrominoes = "IOTSZJL";
+            const random = tetrominoes[Math.floor(Math.random() * tetrominoes.length)];
+            return { shape: TETROMINOS[random], x: 3, y: 0 };
+        }
+
+        // Main game loop
+        function gameLoop() {
+            setTimeout(() => {
+                // Update game state here (moving down, clearing lines, etc.)
+                drawBoard();
+                gameLoop();
+            }, 500); // adjust speed as needed
+        }
+
+        startGame();
+    </script>
+</body>
+</html>
+
